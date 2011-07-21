@@ -1,0 +1,292 @@
+<dtml-var manage_page_header>
+
+<dtml-with "_(management_view='Configure')">
+  <dtml-var manage_tabs>
+</dtml-with>
+
+<p class="form-help">
+  Change the basic properties of your LDAPUserFolder 
+  on this form.
+</p>
+
+<form action="manage_edit" method="post">
+
+  <table cellspacing="0" cellpadding="3">
+  
+    <tr>
+      <td align="left" valign="top" class="form-optional">
+        Title
+      </td>
+      <td align="left" valign="top" colspan="3">
+        <input type="text" name="title" size="40" value="&dtml-title;" />
+      </td>
+    </tr>
+  
+    <tr>
+      <td align="left" valign="top" class="form-label">
+        Login Name Attribute
+      </td>
+      <td align="left" valign="top" colspan="3">
+        <select name="login_attr">
+          <dtml-let la="getProperty('_login_attr')">
+            <dtml-in expr="getLDAPSchema()">
+              <dtml-let sk="_['sequence-key']"
+                        si="_['sequence-item']"
+                        la="getProperty( '_login_attr' )"
+                        sel="la == sk and 'selected' or ''">
+                <option value="&dtml-sk;" &dtml-sel;>
+                  &dtml-si; (&dtml-sk;)
+                </option>
+              </dtml-let>
+            </dtml-in>
+            <option value="dn" <dtml-if "la=='dn'">selected</dtml-if>> 
+              Distinguished Name (dn) 
+            </option>
+          </dtml-let>
+        </select>
+      </td>
+    </tr>
+  
+    <tr>
+      <td align="left" valign="top" class="form-label">
+        User ID Attribute
+      </td>
+      <td align="left" valign="top" colspan="3">
+        <select name="uid_attr">
+          <dtml-let la="getProperty('_uid_attr')">
+            <dtml-in expr="getLDAPSchema()">
+              <dtml-let sk="_['sequence-key']"
+                        si="_['sequence-item']"
+                        sel="la == sk and 'selected' or ''">
+                <option value="&dtml-sk;" &dtml-sel;>
+                  &dtml-si; (&dtml-sk;)
+                </option>
+              </dtml-let>
+            </dtml-in>
+            <option value="dn" <dtml-if "la=='dn'">selected</dtml-if>> 
+              Distinguished Name (dn) 
+            </option>
+          </dtml-let>
+        </select>
+      </td>
+    </tr>
+
+    <tr>
+      <td align="left" valign="top" class="form-label">
+        RDN Attribute
+      </td>
+      <td align="left" valign="top" colspan="3">
+        <select name="rdn_attr">
+          <dtml-in expr="getLDAPSchema()">
+            <dtml-let sk="_['sequence-key']"
+                      si="_['sequence-item']"
+                      la="getProperty( '_rdnattr' )"
+                      sel="la == sk and 'selected' or ''">
+              <option value="&dtml-sk;" &dtml-sel;>
+                &dtml-si; (&dtml-sk;)
+              </option>
+            </dtml-let>
+          </dtml-in>
+        </select>
+      </td>
+    </tr>
+  
+    <tr>
+      <td align="left" valign="top" class="form-label">
+        Users Base DN
+      </td>
+      <td align="left" valign="top">
+        <input type="text" name="users_base" size="40"
+               value="<dtml-var name="users_base">">
+      </td>
+      <td align="left" valign="top" class="form-label">
+        Scope
+      </td>
+      <td align="left" valign="top">
+        <select name="users_scope:int">
+          <option value="0" <dtml-if "users_scope==0">selected</dtml-if>>
+            BASE
+          </option>
+  	    <option value="1" <dtml-if "users_scope==1">selected</dtml-if>>
+            ONELEVEL
+          </option>
+  	    <option value="2"<dtml-if "users_scope==2">selected</dtml-if>>
+            SUBTREE
+          </options>
+        </select></td>
+    </tr>
+  
+    <tr>
+      <td align="left" valign="top" class="form-label">
+        Group storage
+      </td>
+      <td align="left" valign="top">
+        <select name="local_groups:int">
+          <dtml-let lg="getProperty( '_local_groups' )">
+            <option value="0" <dtml-if "not lg">selected</dtml-if>>
+              Groups stored on LDAP server
+            </option>
+            <option value="1" <dtml-if lg>selected</dtml-if>>
+              Groups not stored on LDAP server
+            </option>
+          </select>
+        </dtml-let>
+      </td>
+    </tr>
+  
+    <tr>
+      <td align="left" valign="top" class="form-label">
+        Group mapping (Applies to LDAP group storage only)
+      </td>
+      <td align="left" valign="top">
+        <select name="implicit_mapping:int">
+          <dtml-let im="getProperty( '_implicit_mapping' )">
+            <option value="0" <dtml-if "not im">selected</dtml-if>>
+              Manually map LDAP groups to Zope roles
+            </option>
+            <option value="1" <dtml-if im>selected</dtml-if>>
+              Automatically map LDAP groups to Zope roles
+            </option>
+          </select>
+        </dtml-let>
+      </td>
+    </tr>
+  
+    <tr>
+      <td align="left" valign="top" class="form-label">
+        Groups Base DN
+      </td>
+      <td align="left" valign="top">
+        <input type="text" name="groups_base" size="40" 
+               value="<dtml-var name="groups_base">">
+      </td>
+      <td align="left" valign="top" class="form-label">
+        Scope
+      </td>
+      <td align="left" valign="top">
+        <select name="groups_scope:int">
+          <option value="0" <dtml-if "groups_scope==0">selected</dtml-if>>
+            BASE
+          </option>
+          <option value="1" <dtml-if "groups_scope==1">selected</dtml-if>>
+            ONELEVEL
+          </option>
+          <option value="2" <dtml-if "groups_scope==2">selected</dtml-if>>
+            SUBTREE
+          </option>
+        </select></td>
+    </tr>
+  
+    <tr>
+      <td align="left" valign="top" class="form-optional">
+        Manager DN
+      </td>
+      <td align="left" valign="top">
+        <input type="text" name="binduid:string" size="40" 
+               value="<dtml-var expr="getProperty('_binduid')">" />
+      </td>
+      <td align="left" valign="top" class="form-optional">
+        Password
+      </td>
+      <td align="left" valign="top">
+        <input type="password" name="bindpwd:string" size="13" 
+               value="<dtml-var expr="getEncryptedBindPassword()">">
+      </td>
+    </tr>
+
+    <tr>
+      <td align="left" valign="top" class="form-optional">
+        Manager DN Usage
+      </td>
+      <td align="left" valign="top">
+        <dtml-let usg="getProperty('_binduid_usage')">
+          <select name="binduid_usage:int">
+            <option value="0" <dtml-if "usg == 0">selected</dtml-if>> 
+              Never 
+            </option>
+            <option value="1" <dtml-if "usg == 1">selected</dtml-if>> 
+              Always 
+            </option>
+            <option value="2" <dtml-if "usg == 2">selected</dtml-if>> 
+              For login data lookup only 
+            </option>
+          </select>
+        </dtml-let>
+      </td>
+      <td align="left" valign="top" class="form-label">
+        Read-only
+      </td>
+      <td align="left" valign="top">
+        <dtml-let sel="getProperty('read_only') and 'checked' or ''">
+         <input type="checkbox" name="read_only" &dtml-sel;>
+        </dtml-let>
+      </td>
+    </tr>
+  
+    <tr>
+      <td align="left" valign="top" class="form-label">
+        User object classes
+      </td>
+      <td align="left" valign="top">
+        <dtml-let oc="getProperty( '_user_objclasses' )">
+          <input type="text" name="obj_classes" size="40"
+                 value="<dtml-var expr="_.string.join( oc, ',' )">" />
+        </dtml-let>
+      </td>
+    </tr>
+
+    <tr>
+      <td align="left" valign="top" class="form-label">
+        Additional user search filter
+      </td>
+      <td align="left" valign="top">
+        <input type="text" name="extra_user_filter" size="40"
+               value="<dtml-var expr="getProperty('_extra_user_filter')">" />
+      </td>
+      <td colspan="2" class="form-help">
+        Danger! See the online help for details.
+      </td>
+    </tr>
+  
+    <tr>
+      <td align="left" valign="top" class="form-label">
+        User password encryption
+      </td>
+      <td align="left" valign="top">
+        <select name="encryption">
+          <dtml-let enc="getProperty( '_pwd_encryption' )">
+            <dtml-in getEncryptions>
+              <option <dtml-var expr="enc == _['sequence-item'] and 'selected' or ''">>
+                &dtml-sequence-item;
+              </option>
+            </dtml-in>
+          </dtml-let>
+        </select>
+      </td>
+    </tr>
+  
+    <tr>
+      <td align="left" valign="top" class="form-label">
+        Default User Roles
+      </td>
+      <td align="left" valign="top" colspan="3">
+        <dtml-let rls="getProperty( '_roles' )">
+          <input type="text" name="roles" size="40" 
+                 value="<dtml-var expr="_.string.join( rls, ',' )">" />
+        </dtml-let>
+      </td>
+    </tr>
+   
+    <tr>
+      <td>&nbsp;</td>
+      <td colspan="3">
+        <br>
+        <input type="submit" value=" Apply Changes ">
+      </td>
+    </tr>
+  
+  </table>
+</form>
+
+<dtml-var manage_page_footer>
+
