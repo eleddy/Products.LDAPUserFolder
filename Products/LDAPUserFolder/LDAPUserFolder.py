@@ -384,7 +384,126 @@ class LDAPUserFolder(BasicUserFolder):
             form = getattr(self, client_form)
             return form(manage_tabs_message=msg)
 
+    """
+    Specific setters and getters - many of these have to propagate to 
+    the delegate. Other do magic tricks as well in here.
+    
+    Note that using these setters does NOT clear the cache. I'll leave 
+    that as an exercise for the user. This is to stop it from 
+    getting cleared 500 times on a form submit.
+    """
+    security.declareProtected(EDIT_PERMISSION, 'setTitle')
+    def setTitle(self, title):
+        self.title = title
+        
+    security.declareProtected(EDIT_PERMISSION, 'setUsers_base')
+    def setUsers_base(self, users_base):
+        self.users_base = users_base
+        self._delegate.setUsers_base(users_base)
+        
+    security.declareProtected(EDIT_PERMISSION, 'setUsers_scope')
+    def setUsers_scope(self, users_scope):
+        self.users_scope = users_scope
+        
+    security.declareProtected(EDIT_PERMISSION, 'setGroups_base')
+    def setGroups_base(self, groups_base):
+        self.groups_base = groups_base
+    
+    security.declareProtected(EDIT_PERMISSION, 'setGroups_scope')
+    def setGroups_scope(self, groups_scope):
+        self.groups_scope = groups_scope
+        
+    security.declareProtected(EDIT_PERMISSION, 'setGroups_scope')
+    def setGroups_scope(self, groups_scope):
+        self.groups_scope = groups_scope
+        
+    security.declareProtected(EDIT_PERMISSION, 'setRead_only')
+    def setRead_only(self, read_only):
+        self.read_only = not not read_only
+        self._delegate.setRead_only(self.read_only)
+    
+    security.declareProtected(EDIT_PERMISSION, 'setBinduid')
+    def setBinduid(self, binduid):
+        self._binduid = binduid
+        
+        binduid_usage = 1
+        if not binduid:
+            binduid_usage = 0
+        self._binduid_usage = binduid_usage
 
+        self._delegate.setBind_dn(self._binduid)
+        self._delegate.setBinduid_usage(self._binduid_usage)
+    
+    security.declareProtected(EDIT_PERMISSION, 'setRoles')
+    def setRoles(self, roles):
+        if isinstance(roles, basestring):
+            roles = [x.strip() for x in roles.split(',')]
+        self._roles = roles
+        
+    security.declareProtected(EDIT_PERMISSION, 'setBindpwd')
+    def setBindpwd(self, bindpwd):
+        if bindpwd != self.getEncryptedBindPassword():
+            self._bindpwd = bindpwd
+            
+        self._delegate.setBind_pwd(self._bindpwd)
+    
+    security.declareProtected(EDIT_PERMISSION, 'setLocal_groups')
+    def setLocal_groups(self, local_groups):
+        self._local_groups = not not local_groups
+    
+    security.declareProtected(EDIT_PERMISSION, 'setEncryption')
+    def setEncryption(self, encryption):
+        # FYI: crypt is from Products.LDAPUserFolder.utils
+        if encryption == 'crypt' and crypt is None:
+            encryption = 'SHA'
+
+        self._pwd_encryption = encryption
+    
+    
+    security.declareProtected(EDIT_PERMISSION, 'setImplicit_mapping')
+    def setImplicit_mapping(self, implicit_mapping):
+        self._implicit_mapping = implicit_mapping
+    
+    security.declareProtected(EDIT_PERMISSION, 'setObject_classes')
+    def setObject_classes(self, obj_classes):
+        if isinstance(obj_classes, basestring):
+            obj_classes = [x.strip() for x in obj_classes.split(',')]
+        self._user_objclasses = obj_classes
+        self._delegate.setObject_classes(self._user_objclasses)
+    
+    security.declareProtected(EDIT_PERMISSION, 'setRdn_attr')
+    def setRdn_attr(self, rdn_attr):
+        self.checkAndAddLDAPSchemaItem(rdn_attr)
+        self._rdnattr = rdn_attr    
+        self._delegate.setRdn_attr(self._rdnattr)
+        
+    security.declareProtected(EDIT_PERMISSION, 'setLogin_attr')
+    def setLogin_attr(self, login_attr):
+        self.checkAndAddLDAPSchemaItem(login_attr)
+        self._login_attr = login_attr    
+        self._delegate.setLogin_attr(self._login_attr)
+        
+    security.declareProtected(EDIT_PERMISSION, 'setUid_attr')
+    def setUid_attr(self, uid_attr):
+        self.checkAndAddLDAPSchemaItem(uid_attr)
+        self._uid_attr = uid_attr 
+        
+    security.declareProtected(EDIT_PERMISSION, 'checkAndAddLDAPSchemaItem')
+    def checkAndAddLDAPSchemaItem(self, attr_name):
+        """ If an attribute doesn't exist, add to the schema """ 
+        my_attrs = self.getSchemaConfig().keys()
+        
+        # XXX: should we do the dn check for rdn attrs?
+        if attr_name != 'dn' and attr_name not in my_attrs:
+            self.manage_addLDAPSchemaItem( ldap_name=attr_name
+                                         , friendly_name=attr_name
+                                         )  
+                                         
+    security.declareProtected(EDIT_PERMISSION, 'setExtra_user_filter')
+    def setExtra_user_filter(self, extra_user_filter):
+        self._extra_user_filter = extra_user_filter.strip()   
+    
+    
     security.declareProtected(EDIT_PERMISSION, 'manage_edit')
     def manage_edit( self, title, login_attr, uid_attr, users_base
                    , users_scope, roles,  groups_base, groups_scope
@@ -394,69 +513,24 @@ class LDAPUserFolder(BasicUserFolder):
                    , extra_user_filter='', REQUEST=None
                    ):
         """ Edit the LDAPUserFolder Object """
-        if not binduid:
-            binduid_usage = 0
-
-        self.title = title
-        self.users_base = users_base
-        self.users_scope = users_scope
-        self.groups_base = groups_base or users_base
-        self.groups_scope = groups_scope
-        self.read_only = not not read_only
-
-        self._delegate.edit( login_attr=login_attr,
-                             users_base=users_base,
-                             rdn_attr=rdn_attr,
-                             objectclasses=obj_classes,
-                             bind_dn=binduid,
-                             bind_pwd=bindpwd,
-                             binduid_usage=binduid_usage,
-                             read_only=read_only,
-                           )
-
-        if isinstance(roles, basestring):
-            roles = [x.strip() for x in roles.split(',')]
-        self._roles = roles
-
-        self._binduid = binduid
-        if bindpwd != self.getEncryptedBindPassword():
-            self._bindpwd = bindpwd
-        self._binduid_usage = int(binduid_usage)
-
-        self._local_groups = not not local_groups
-
-        self._implicit_mapping = implicit_mapping
-
-        if encryption == 'crypt' and crypt is None:
-            encryption = 'SHA'
-
-        self._pwd_encryption = encryption
-
-        if isinstance(obj_classes, basestring):
-            obj_classes = [x.strip() for x in obj_classes.split(',')]
-        self._user_objclasses = obj_classes
-
-        my_attrs = self.getSchemaConfig().keys()
-
-        if rdn_attr not in my_attrs:
-            self.manage_addLDAPSchemaItem( ldap_name=rdn_attr
-                                         , friendly_name=rdn_attr
-                                         )
-        self._rdnattr = rdn_attr
-
-        if login_attr != 'dn' and login_attr not in my_attrs:
-            self.manage_addLDAPSchemaItem( ldap_name=login_attr
-                                         , friendly_name=login_attr
-                                         )
-        self._login_attr = login_attr
-
-        if uid_attr != 'dn' and uid_attr not in my_attrs:
-            self.manage_addLDAPSchemaItem( ldap_name=uid_attr
-                                         , friendly_name=uid_attr
-                                         )
-        self._uid_attr = uid_attr
-
-        self._extra_user_filter = extra_user_filter.strip()
+        
+        self.setBinduid(binduid)
+        self.setTitle(title)
+        self.setUsers_base(users_base)
+        self.setUsers_scope(users_scope)
+        self.setGroups_base(groups_base or users_base)
+        self.setGroups_scope(groups_scope)
+        self.setRead_only(read_only)
+        self.setRoles(roles)
+        self.setBindpwd(bindpwd)
+        self.setLocal_groups(local_groups)
+        self.setEncryption(encryption)
+        self.setImplicit_mapping(implicit_mapping)
+        self.setObject_classes(obj_classes) 
+        self.setRdn_attr(rdn_attr)
+        self.setLogin_attr(login_attr)
+        self.setUid_attr(uid_attr)
+        self.setExtra_user_filter(extra_user_filter)
 
         self._clearCaches()
         msg = 'Properties changed'

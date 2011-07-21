@@ -178,14 +178,43 @@ class LDAPDelegate(Persistent):
             , bind_dn, bind_pwd, binduid_usage, read_only
             ):
         """ Edit this LDAPDelegate instance """
-        self.login_attr = login_attr
-        self.rdn_attr = rdn_attr
-        self.bind_dn = bind_dn
-        self.bind_pwd = bind_pwd
-        self.binduid_usage = int(binduid_usage)
-        self.read_only = not not read_only
-        self.u_base = users_base
+        self.setLogin_attr(login_attr)
+        self.setRdn_attr(rdn_attr)
+        self.setBind_dn(binf_dn)
+        self.setBind_pwd(bind_pwd)
+        self.setBinduid_usage(binduid_usage)
+        self.setRead_only(read_only)
+        self.setUsers_base(users_base)
+        self.setObject_classes(objectclasses)
+        
 
+    """
+    Adding some setters so they can be safely accessed by other classes
+    and not hav to re-add some of this logic
+    """
+    def setLogin_attr(self, login_attr):
+        self.login_attr = login_attr
+        
+    def setRdn_attr(self, rdn_attr):
+        self.rdn_attr = rdn_attr
+        
+    def setBind_dn(self, bind_dn):
+        self.bind_dn = bind_dn
+    
+    def setBind_pwd(self, bind_pwd):
+        self.bind_pwd = bind_pwd
+    
+    def setBinduid_usage(self, binduid_usage):
+        self.binduid_usage = int(binduid_usage)
+    
+    def setRead_only(self, read_only):
+        self.read_only = not not read_only    
+    
+    def setUsers_base(self, users_base):
+        self.u_base = users_base
+    
+    def setObject_classes(self, objectclasses):
+        """ Edit the user classes """
         if isinstance(objectclasses, basestring):
             objectclasses = [x.strip() for x in objectclasses.split(',')]
         self.u_classes = objectclasses
